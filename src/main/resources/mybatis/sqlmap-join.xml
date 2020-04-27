@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="JoinDao">
+	<select id="selectAllUser" resultType="MemberAdminVo" parameterType="PageReady">
+		select USERNUM,EMAIL,USERCODE,to_char(REGIDATE, 'YYYY/MM/DD') as REGIDATE,WARNINGCOUNT from
+		(select "USER".USERNUM,"USER".EMAIL,"USER".USERCODE,"USER".REGIDATE,"SUBUSER".WARNINGCOUNT,
+		row_number() over(order by "USER".USERNUM) as rNum from "USER" 
+		JOIN "SUBUSER" ON ("USER".USERCODE = "SUBUSER".USERCODE) where ("USER".USERCODE != 'admin'))
+		where rNum between #{rowStart} and #{rowEnd} order by USERNUM
+	</select>
+	<select id="selectFromEmail" resultType="MemberAdminVo" parameterType="HashMap">
+		select "USER".USERNUM,"USER".EMAIL,"USER".USERCODE,"USER".REGIDATE,"SUBUSER".WARNINGCOUNT
+		from "USER" 
+		JOIN "SUBUSER" ON ("USER".USERCODE = "SUBUSER".USERCODE) where email like '%'||#{content}||'%'
+	</select>
+	<select id="selectFromUsercode" resultType="MemberAdminVo" parameterType="HashMap">
+		select "USER".USERNUM,"USER".EMAIL,"USER".USERCODE,"USER".REGIDATE,"SUBUSER".WARNINGCOUNT
+		from "USER" 
+		JOIN "SUBUSER" ON ("USER".USERCODE = "SUBUSER".USERCODE) where "USER".USERCODE like '%'||#{content}||'%'
+	</select>
+	<select id="selectFromRegiDate" resultType="MemberAdminVo" parameterType="HashMap">
+		select "USER".USERNUM,"USER".EMAIL,"USER".USERCODE,"USER".REGIDATE,"SUBUSER".WARNINGCOUNT
+		from "USER" 
+		JOIN "SUBUSER" ON ("USER".USERCODE = "SUBUSER".USERCODE) where REGIDATE=to_date(#{content},'yyyy/MM/dd')
+	</select>
+	
+	<select id="countAllUser" resultType="int">
+		select count(usernum)-1 from "USER"
+	</select>
+ 	<select id="emailSelect" resultType="Member" parameterType="String" >
+ 		select * from "USER" where email=#{value}
+ 	</select>
+ 	<select id="usercodeCheck" resultType="Member" parameterType="String">
+ 		select * from "USER" where usercode=#{value}
+ 	</select>
+ 	<select id="phoneSelect" resultType="Member" parameterType="String">
+ 		select * from "USER" where phone=#{value}
+ 	</select>
+ 	<insert id="userInsert" parameterType="Member">
+ 		insert into "USER" values(usernum.nextval,#{usercode},#{email},#{password},to_date(#{birthdate},'yyyy/MM/dd'),#{phone},sysdate)
+ 	</insert>
+ 	<update id="updateInfo" parameterType="Member">
+ 		update "USER" set USERCODE=#{usercode},BIRTHDATE=to_date(#{birthdate},'yyyy/MM/dd'),
+ 		PHONE=#{phone} where email=#{email}
+ 	</update>
+ 	<update id="updatePwd" parameterType="HashMap">
+ 		update "USER" set password=#{newPassword} where email=#{email}
+ 	</update>
+ 	<update id="updateWarning" parameterType="HashMap">
+ 		update "SUBUSER" set WARNINGCOUNT = WARNINGCOUNT+1 where USERCODE in 
+ 		<foreach item="array" collection="array" separator="," open="(" close=")">
+ 			#{array}
+ 		</foreach>
+ 	</update>
+ 	<delete id="deleteAccount" parameterType="String">
+ 		delete "USER" where EMAIL=#{email}
+ 	</delete>
+ 	<delete id="adminDeleteAccount" parameterType="HashMap">
+ 		delete "USER" where USERCODE in 
+ 		<foreach item="array" collection="array" separator="," open="(" close=")">
+ 			#{array}
+ 		</foreach>
+ 	</delete>
+</mapper>
+

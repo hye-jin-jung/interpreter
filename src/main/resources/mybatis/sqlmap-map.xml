@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="MapDao">
+
+	<select id="selectGuinAll" resultType="mapDto">
+		select ADDRESS,LAT,LNG from EB
+	</select>
+	
+	<select id="selectGuinArticles" parameterType="HashMap" resultType="ArticlesDto">
+		 select "EBCODE","TITLE","USERCODE",to_char("WORKSTART", 'YYYY/MM/DD') as "WORKSTART", to_char("WORKEND", 'YYYY/MM/DD') as "WORKEND" from EB where ("LAT" between #{swLat} and #{neLat}) AND ("LNG" between #{swLng} and #{neLng})order by "WORKSTART" asc
+	</select>
+	
+	<select id="selectGujicAll" resultType="mapDto">
+		select ADDRESS,LAT,LNG from WB
+	</select>
+	
+	<select id="selectGujicArticles" parameterType="HashMap" resultType="ArticlesDto">
+		 select "WBCODE","TITLE","USERCODE",to_char("WORKSTART", 'YYYY/MM/DD') as "WORKSTART", to_char("WORKEND", 'YYYY/MM/DD') as "WORKEND" from WB where ("LAT" between #{swLat} and #{neLat}) AND ("LNG" between #{swLng} and #{neLng})order by "WORKSTART" asc
+	</select>
+	
+	
+	
+</mapper>

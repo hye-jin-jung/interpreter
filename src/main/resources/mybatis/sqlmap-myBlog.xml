@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="myBlogDAO">
+	
+	<!-- 검색 조건 쿼리 IF문 -->
+	<sql id="search">
+		<if test="searchType != null">
+			<if test="searchType == 't'.toString()">and title like '%' || #{keyword} || '%'</if>
+			<if test="searchType == 'c'.toString()">and contents like '%' || #{keyword} || '%'</if>
+			<if test="searchType == 'tc'.toString()">and (title like '%' || #{keyword} || '%') or (contents like '%' || #{keyword} || '%')</if>
+		</if>
+	</sql>
+	
+	
+	<!--뽐게 START-->
+	<!--뽐게 리스트 + 페이징 + 검색 -->
+	<select id="listSearchB" resultType="myBlog.myBlog.BbomGeVO" parameterType="HashMap">
+		select SHOWCODE, NUM, WRITERCODE, TITLE, CONTENTS, to_char(REGISTDATE, 'YYYY/MM/DD') as REGISTDATE, HIT, THUMB
+		from (select SHOWCODE, NUM, WRITERCODE, TITLE, CONTENTS, REGISTDATE, HIT, THUMB, ROW_NUMBER() OVER (order by NUM desc) as rNUM from BBOMGE where WRITERCODE = #{writerCode}<include refid="search"></include>)
+		where rNUM between #{rowStart} and #{rowEnd}
+	</select>
+	
+	<select id="countSearchB" parameterType="HashMap" resultType="int">
+		<![CDATA[
+		select count(NUM)
+		from BBOMGE where WRITERCODE = #{writerCode}
+	 	]]>
+		<include refid="search"></include>
+	</select>
+	
+	<!-- 뽐게 글 1개 불러오기 -->
+	<select id="selectContent" resultType="myBlog.myBlog.BbomGeVO" parameterType="String">
+		select SHOWCODE, WRITERCODE, TITLE, CONTENTS, REGISTDATE, HIT from
+		BBOMGE where SHOWCODE
+		= #{value}
+	</select>
+
+	<insert id="insertBbomGe" parameterType="HashMap">
+		insert into BBOMGE
+		(SHOWCODE, NUM, WRITERCODE, TITLE, CONTENTS) values
+		('B'||BBOMGE_SEQ_CODE.nextval, BBOMGE_SEQ_NUM.nextval, #{writerCode},
+		#{title}, #{contents})
+	</insert>
+
+	<select id="selectUserInfo" parameterType="String" resultType="MemberAdminVo">
+		SELECT B.CFCOUNT, B.WARNINGCOUNT
+		from "USER" A LEFT OUTER JOIN "SUBUSER" B on A.USERCODE = B.USERCODE
+		where A.USERCODE = #{value}
+	</select>
+	
+	<select id="selectUserLoveInfo" parameterType="String" resultType="int">
+		select count(*) from LOVE where LOVERCODE = #{value}
+	</select>
+
+	<select id="selectHtml" parameterType="String" resultType="String">
+		select contents from BBOMGE where WRITERCODE = #{value} and CONTENTS LIKE '%src%' order by NUM desc
+	</select>
+	
+	<select id="selectLoveCount" parameterType="String" resultType="int">
+		select count(LOVERCODE) from LOVE where userCode = #{value}
+	</select>
+	
+	<select id="selectMarkCount" parameterType="String" resultType="int">
+		select count(BMKCODE) from BOOKMARK where userCode = #{value}
+	</select>
+	
+	<select id="selectGesiCount" parameterType="String" resultType="int">
+		<![CDATA[select (select count(*) from EB where USERCODE =]]>#{value}<![CDATA[)+(select count(*) from WB where USERCODE = ]]>#{value}<![CDATA[)+(select count(*) from FREEBOARD where WRITERCODE = ]]>#{value}<![CDATA[) from DUAL]]>
+	</select>
+
+	<update id="blogupHit" parameterType="String">
+		update BBOMGE set HIT = HIT + 1
+		where SHOWCODE = #{value}
+	</update>
+
+	<delete id="deleteContent" parameterType="String">
+		delete from BBOMGE
+		where SHOWCODE = #{value}
+	</delete>
+
+	<update id="updateContent" parameterType="HashMap">
+		update BBOMGE set TITLE
+		= #{title}, CONTENTS = #{contents} where SHOWCODE =
+		#{showCode}
+	</update>
+
+	<insert id="insertBbomGeCmt" parameterType="myBlog.myBlog.BbomGeCmtVO">
+		insert into COMMENTS (NUM, USERCODE, ARTICLECODE,
+		COMMENTS) values
+		(COMMENTS_SEQ.nextval, #{userCode}, #{articleCode},
+		#{comments})
+	</insert>
+
+	<select id="selectCmtList" resultType="myBlog.myBlog.BbomGeCmtVO" parameterType="String">
+		select NUM,
+		USERCODE, COMMENTS, to_char(REGISTDATE, 'YYYY/MM/DD') as
+		REGISTDATE
+		from COMMENTS where ARTICLECODE = #{value} order by NUM
+		DESC
+	</select>
+
+	<update id="updateBbomGeCmt"
+		parameterType="myBlog.myBlog.BbomGeCmtVO">
+		update COMMENTS set COMMENTS = #{comments}, REGISTDATE =
+		SYSDATE where NUM =
+		#{num}
+	</update>
+
+	<delete id="deleteBbomGeCmt"
+		parameterType="myBlog.myBlog.BbomGeCmtVO">
+		delete from COMMENTS where NUM = #{num}
+	</delete>
+	<!--뽐게 END-->
+	
+	
+	<!-- 내가 쓴 게시물 START -->
+	<!-- 내가 쓴 사장님 게시물 불러오기 (리스트 + 페이징 + 검색) -->
+	<select id="selectMyErContent" resultType="EmployerBoardVO" parameterType="HashMap">
+		select MATCHING, TIMEOVER, EBCODE, USERCODE, TITLE, to_char(REGDATE, 'YYYY/MM/DD')as REGDATE, COUNT
+		from (select NUM, MATCHING, TIMEOVER, EBCODE, USERCODE, TITLE, REGDATE, COUNT, row_number() over(order by NUM
+		desc) as rNUM from EB where USERCODE = #{userCode} <include refid="search"></include>)EB where rNum between #{rowStart} and #{rowEnd}
+		order by NUM desc
+	</select>
+	
+	<select id="listCountEr" parameterType="HashMap" resultType="int">
+		<![CDATA[
+			select count(NUM) from EB where USERCODE = #{userCode} and NUM > 0
+		]]> <include refid="search"></include>
+	</select>
+	
+	
+	<!-- 내가 쓴 알바생 게시물 불러오기 (리스트 + 페이징 + 검색) -->
+	<select id="selectMyEeContent" resultType="WorkerBoardVO" parameterType="HashMap">
+		select TIMEOVER, WBCODE, USERCODE, TITLE, to_char(REGDATE, 'YYYY/MM/DD')as REGDATE, COUNT
+		from (select NUM, TIMEOVER, WBCODE, USERCODE, TITLE, REGDATE, COUNT, row_number() over(order by NUM
+		desc) as rNUM from WB where USERCODE = #{userCode} <include refid="search"></include>)WB where rNum between #{rowStart} and #{rowEnd}
+		order by NUM desc
+	</select>
+	
+	<select id="listCountEe" parameterType="HashMap" resultType="int">
+		<![CDATA[
+			select count(NUM) from WB where USERCODE = #{userCode} and NUM > 0
+		]]> <include refid="search"></include>
+	</select>
+	
+	
+	<!-- 내가 쓴 자게 게시물 불러오기 (리스트 + 페이징 + 검색) -->
+	<select id="selectMyFreeContent" resultType="FreeBoardVo" parameterType="HashMap">
+		select FREECODE,
+		WRITERCODE, TITLE, CONTENT, REGDATE,
+		HIT
+		from (
+		select NUM, FREECODE,
+		WRITERCODE, TITLE, CONTENT, REGDATE,
+		HIT,
+		row_number() over(order by NUM
+		desc) as rNum
+		from FREEBOARD where WRITERCODE =
+		#{writerCode} <include refid="search"></include>
+		)
+		FREEBOARD
+		where rNum between #{rowStart} and #{rowEnd}
+		order by NUM desc
+	</select>
+
+	<select id="listCountF" parameterType="HashMap" resultType="int">
+		<![CDATA[
+			select count(NUM) from FREEBOARD where WRITERCODE = #{writerCode} and NUM > 0
+		]]> <include refid="search"></include>
+	</select>
+	<!--내가 쓴 게시물 END-->
+
+</mapper>

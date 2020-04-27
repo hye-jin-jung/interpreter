@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="CalendarDao">
+	<select id="selectCalList" resultType="CalendarDto" parameterType="String">
+		select * from SCHEDULE where USERCODE=#{value} order by SCHEDULECODE
+	</select>
+	<insert id="insertCal" parameterType="CalendarDto">
+		insert into SCHEDULE values 
+		('S'||codenum.nextval, #{userCode}, #{scheduleName}, #{contents}, #{startDate}, 
+		#{endDate}, #{scheduleCategory}, #{backColor}, #{fontColor}, #{allDayCheck})
+	</insert>
+	<update id="update" parameterType="CalendarDto">
+		update SCHEDULE set 
+		scheduleName=#{scheduleName},
+		contents=#{contents}, 
+		startDate=#{startDate},
+		endDate=#{endDate},
+		scheduleCategory=#{scheduleCategory},
+		backColor=#{backColor}, 
+		fontColor=#{fontColor},
+		allDayCheck=#{allDayCheck} 
+		where SCHEDULECODE= #{scheduleCode}
+	</update>
+	<delete id="delete" parameterType="String">
+		delete SCHEDULE where SCHEDULECODE= #{value}
+	</delete>
+	<update id="dragNdrop" parameterType="HashMap">
+	update SCHEDULE set STARTDATE=#{startDate},ENDDATE=#{endDate} where SCHEDULECODE=#{scheduleCode}
+	</update>
+</mapper>

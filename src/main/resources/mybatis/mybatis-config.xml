@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+	<!-- 마이바티스 작동 규칙 정의 -->
+	<settings>
+		<setting name="cacheEnabled" value="false" />
+		<setting name="jdbcTypeForNull" value="NULL"/>
+		<setting name="useGeneratedKeys" value="false" />
+		<setting name="mapUnderscoreToCamelCase" value="true" />
+	</settings>
+	<typeAliases>
+		<typeAlias alias="ChatVo" type="chatMatching.vo.ChatVo" />
+		
+		<typeAlias alias="MatchingVo" type="chatMatching.vo.MatchingVo" />
+		<typeAlias alias="ReviewVo" type="chatMatching.vo.ReviewVo" />
+		<typeAlias alias="SubUserVo" type="chatMatching.vo.SubUserVo" />
+		<typeAlias alias="IntroductionVo" type="myBlogErEe.vo.IntroductionVo" />
+		<typeAlias alias="CareerVo" type="myBlogErEe.vo.CareerVo" />
+		<typeAlias alias="RankingVo" type="ranking.vo.RankingVo" />
+		<typeAlias alias="AdverVo" type="advertisement.vo.AdverVo" />
+		<typeAlias alias="AdverAppVo" type="advertisement.vo.AdverAppVo" />
+		<!--여울-->
+		<typeAlias alias="NoticeVo" type="cscenter.vo.NoticeVo" />
+		<typeAlias alias="QnaRequestVo" type="cscenter.vo.QnaRequestVo" />
+		<typeAlias alias="MemberVo" type="cscenter.vo.MemberVo" />
+
+		<typeAlias alias="FreeBoardVo" type="freeboard.vo.FreeBoardVo" />
+		<typeAlias alias="PageReady" type="freeboard.vo.PageReady" />
+		<typeAlias alias="Search" type="freeboard.vo.Search" />
+
+		<typeAlias alias="MapDto" type="map.vo.MapDto" />
+		<typeAlias alias="ArticlesDto" type="map.vo.ArticlesDto" />
+		<typeAlias alias="CommentsVo" type="freeboard.vo.CommentsVo" />
+		
+		
+		<!--큰혜 -->
+		<typeAlias alias="Member" type="join.member.Member" />
+		<typeAlias alias="MemberAdminVo" type="join.member.MemberAdminVo" />
+		
+		<typeAlias alias="employerBoardVO" type="employerBoard.vo.EmployerBoardVO" />
+		<typeAlias alias="ebCriteria" type="employerBoard.vo.EbCriteria" />
+		<typeAlias alias="ebSearch" type="employerBoard.vo.EbSearch" />
+		<typeAlias alias="workerBoardVO" type="workerBoard.vo.WorkerBoardVO" />
+		<typeAlias alias="wbCriteria" type="workerBoard.vo.WbCriteria" />
+		<typeAlias alias="wbSearch" type="workerBoard.vo.WbSearch" />
+		<typeAlias alias="bookMarkVO" type="bookMark.vo.BookMarkVO" />
+		<typeAlias alias="loveVO" type="love.vo.LoveVO"/>
+		
+		<!-- 캘린더 -->
+		<typeAlias alias="CalendarDto" type="calendar.calendar.CalendarDto" />
+		
+		
+	</typeAliases>
+	
+</configuration>

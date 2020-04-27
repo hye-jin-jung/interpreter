@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="admin">
+	
+	<select id="adminLogIn" parameterType="admin.AdminVO" resultType="admin.AdminVO">
+		select * from ADMIN where ADMINID = #{adminID} and ADMINPW = #{adminPW}
+	</select>
+	
+	<!-- 공지사항 게시판 -->
+	<select id="selectAllContents" resultType="admin.notice.NoticeDTO">
+		select NO, TITLE, CONTENT, to_char(REGDATE, 'YYYY/MM/DD') as REGDATE, HIT from NOTICE order by NO desc
+	</select>
+	
+	<select id="selectContent" parameterType="String" resultType="admin.notice.NoticeDTO">
+		select NO, TITLE, CONTENT, to_char(REGDATE, 'YYYY/MM/DD') as REGDATE, HIT from NOTICE where NO = #{value}
+	</select>
+
+	<insert id="insertContent" parameterType="HashMap">
+		insert into NOTICE (NO, TITLE, CONTENT) values (NOTICE_SEQ.nextval, #{title}, #{content})
+	</insert>
+	
+	<update id="updateContent" parameterType="HashMap">
+		update NOTICE set TITLE = #{title}, CONTENT = #{content} where NO = #{no}
+	</update>
+	
+	<delete id="deleteContent" parameterType="String">
+		delete from NOTICE where NO = #{value}
+	</delete>
+	
+	<update id="upHit" parameterType="String">
+		update NOTICE set HIT = HIT + 1 where NO = #{value}
+	</update>
+
+	
+	
+	
+	
+	<!-- 1:1 문의 게시판 -->
+	<select id="qnaPaging" parameterType="admin.qna.QuestionCriteria" resultType="admin.qna.QuestionDTO">
+		select QUESTIONNO, INQUIRYTYPE, TITLE, WRITERCODE, to_char(REGDATE, 'YYYY/MM/DD') as REGDATE, YN
+		from (select QUESTIONNO, INQUIRYTYPE, TITLE, WRITERCODE, REGDATE, YN, row_number() over(order by QUESTIONNO desc) as rNum from QUESTION)
+		QUESTION where rNum between #{rowStart} and #{rowEnd} order by QUESTIONNO desc
+	</select>
+	
+	<select id="qnaListCount" resultType="int">
+		<![CDATA[select count(QUESTIONNO) from QUESTION where QUESTIONNO > 0]]>
+	</select>
+	
+	<select id="selectQuestion" parameterType="String" resultType="admin.qna.QuestionDTO">
+		<!-- select QUESTIONNO, WRITERCODE, INQUIRYTYPE, TITLE, CONTENT, COMPLAIN, to_char(REGDATE, 'YYYY/MM/DD') as REGDATE, YN from QUESTION where QUESTIONNO = #{value} -->
+		select QUESTION.QUESTIONNO, QUESTION.NO, QUESTION.WRITERCODE, QUESTION.INQUIRYTYPE, QUESTION.TITLE, QUESTION.CONTENT, QUESTION.COMPLAIN, QUESTION.REGDATE, QUESTION.YN, QFILE.FILEPATH
+		from QUESTION full outer join QFILE on QUESTION.NO = QFILE.NO where QUESTIONNO = #{value}
+	</select>
+	
+	<delete id="deleteQuestion" parameterType="String">
+		delete from QUESTION where QUESTIONNO = #{value}
+	</delete>
+	
+	
+	
+	<!-- 1:1 문의 게시판 댓글 -->
+	<select id="selectAllComments" parameterType="String" resultType="admin.qna.AnswerDTO">
+		select * from ANSWER where QUESTIONNO = #{value}
+	</select>
+	
+	<insert id="insertComment" parameterType="HashMap">
+		insert into ANSWER ("ANSWERNO", "QUESTIONNO", "COMMENT") values (ANSWER_SEQ.nextval, #{questionNo}, #{comment})
+	</insert>
+	
+	<update id="updateComment" parameterType="admin.qna.AnswerDTO">
+		update ANSWER set "COMMENT" = #{comment}, "REGDATE" = sysdate where "ANSWERNO" = #{answerNo}
+	</update>
+	
+	<delete id="deleteComment" parameterType="admin.qna.AnswerDTO">
+		delete from ANSWER where "ANSWERNO" = #{answerNo}
+	</delete>
+	
+	
+	
+	
+	
+	<!-- 광고 문의 게시판 -->
+	<select id="adAppList" resultType="admin.ad.AdminAdAppVO">
+		select PAGENO, ADAPPNO, USERCODE, ENTERPRISE, IMAGE, ADCATEGORY, ADDATE, LINK, TITLE, CONTENT, PHONE, EMAIL, to_char(REGDATE, 'YYYY/MM/DD') as REGDATE from ADAPPLICATION order by PAGENO desc
+	</select>
+	
+	<select id="selectAdApp" parameterType="String" resultType="admin.ad.AdminAdAppVO">
+		select PAGENO, ADAPPNO, USERCODE, ENTERPRISE, IMAGE, ADCATEGORY, ADDATE, LINK, TITLE, CONTENT, PHONE, EMAIL, to_char(REGDATE, 'YYYY/MM/DD') as REGDATE from ADAPPLICATION where PAGENO = #{pageNo}
+	</select>
+	
+	<delete id="deleteAdApp" parameterType="String">
+		delete from ADAPPLICATION where PAGENO = #{value}
+	</delete>
+	
+	
+	
+	<!-- 광고 게시판 -->
+	<select id="selectAdContents" resultType="admin.ad.AdminAdVO">
+		select "ADNO", "ADAPPNO", "ADCATEGORY", to_char("START", 'YYYY/MM/DD') as "START", to_char("END", 'YYYY/MM/DD') as "END" from AD
+	</select>
+	
+	<select id="adUserCodeCheck" parameterType="String" resultType="MemberVo">
+		select * from "USER" where USERCODE = #{userCode}
+	</select>
+	
+	<select id="checkAdAppNo" parameterType="admin.ad.AdminAdAppVO" resultType="admin.ad.AdminAdAppVO">
+		select * from ADAPPLICATION where ADAPPNO = ${pageNo} and ADCATEGORY = '${adCategory}'
+	</select>
+	
+	<insert id="insertAd" parameterType="HashMap">
+		insert into AD ("ADNO", "ADAPPNO", "ADCATEGORY", "START", "END") values (AD_SEQ.NEXTVAL, #{adAppNo}, #{adCategory}, to_date(#{start}, 'YYYY/MM/DD'), to_date(#{end}, 'YYYY/MM/DD'))
+	</insert>
+	
+	<delete id="deleteAd" parameterType="HashMap">
+		delete AD where ADNO = 
+ 		<foreach item="array" collection="array" separator="," open="(" close=")">
+ 			#{array}
+ 		</foreach>
+	</delete>
+
+</mapper>

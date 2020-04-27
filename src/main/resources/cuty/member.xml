@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xsi:schemaLocation="http://www.springframework.org/schema/mvc 
+		http://www.springframework.org/schema/mvc/spring-mvc-4.1.xsd
+		http://www.springframework.org/schema/beans 
+		http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/tx 
+		http://www.springframework.org/schema/tx/spring-tx-3.2.xsd">
+	
+	<bean id="adminVO" class="admin.AdminVO"/>
+	
+	<bean id="adminDAO" class="admin.AdminDAO">
+		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
+		<property name="adminVO" ref="adminVO"/>
+	</bean>
+	
+	<bean id="adminService" class="admin.AdminServiceImpl">
+		<property name="adminDAO" ref="adminDAO"/>
+	</bean>
+	
+	
+	
+	<!-- 공지사항 게시판 -->
+	<bean id="noticeDTO" class="admin.notice.NoticeDTO"/>
+	
+	<bean id="noticeDAO" class="admin.notice.NoticeDAO">
+		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
+		<property name="noticeDTO" ref="noticeDTO"/>
+	</bean>
+	
+	<bean id="noticeService" class="admin.notice.NoticeServiceImpl">
+		<property name="noticeDAO" ref="noticeDAO"/>
+	</bean>
+	
+	<!-- 1:1 문의 게시판 -->
+	<bean id="questionDTO" class="admin.qna.QuestionDTO"/>
+	<bean id="answerDTO" class="admin.qna.AnswerDTO"/>
+	<bean id="questionCriteria" class="admin.qna.QuestionCriteria"/>
+	
+	<bean id="qnaDAO" class="admin.qna.QnADAO">
+		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
+		<property name="questionDTO" ref="questionDTO"/>
+		<property name="answerDTO" ref="answerDTO"/>
+	</bean>
+	
+	<bean id="qnaService" class="admin.qna.QnAServiceImpl">
+		<property name="qnaDAO" ref="qnaDAO"/>
+	</bean>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	<!-- 광고 관리 게시판 -->
+	<bean id="adminAdAppVO" class="admin.ad.AdminAdAppVO"/>
+	<bean id="adminAdVO" class="admin.ad.AdminAdVO"/>
+	
+	<bean id="adminAdDAO" class="admin.ad.AdminAdDAO">
+		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
+		<property name="adminAdAppVO" ref="adminAdAppVO"/>
+		<property name="adminAdVO" ref="adminAdVO"/>
+	</bean>
+	
+	<bean id="adminAdService" class="admin.ad.AdminAdServiceIpml">
+		<property name="adminAdDAO" ref="adminAdDAO"/>
+	</bean>
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	<!-- 회원관리  -->
+	<bean id="adminMemberService" class="admin.member.AdminMemberServiceImpl">
+		<property name="adminMemberDao" ref="adminMemberDao"/>
+	</bean>
+	
+	<bean id="adminMemberDao" class="admin.member.AdminMemberDao">
+		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
+	</bean>
+</beans>

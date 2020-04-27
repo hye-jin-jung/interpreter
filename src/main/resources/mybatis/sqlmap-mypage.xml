@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mypageDao">
+	<select id="selectQnAList" resultType="QnaRequestVo" parameterType="HashMap">
+	select QUESTIONNO,INQUIRYTYPE,TITLE,to_char(REGDATE,'yyyy/MM/DD HH:MI') as REGDATE from (select QUESTIONNO,INQUIRYTYPE,TITLE,REGDATE,row_number() 
+	over(order by REGDATE desc) as rNum from QUESTION where WRITERCODE=#{userCode})
+	QUESTION where rNum between #{pageReady.rowStart} and #{pageReady.rowEnd} order by REGDATE desc
+	</select>
+	
+	<select id="countQnAList" resultType="int" parameterType="String">
+		select count(*) from QUESTION where WRITERCODE=#{userCode}
+	</select>
+</mapper>

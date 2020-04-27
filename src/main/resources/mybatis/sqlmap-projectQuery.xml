@@ -1,0 +1,447 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="projectQuery">
+<!-- resultType은 클래스명 또는 alias or 자료형(ex String) 객체로 쿼리 결과값 실행 받을 때 입력 -->
+<!-- resultMap은 선언 당시 참조로 사용한 이름 입력 -->
+
+ <!--	사장게시판	 -->	
+ 		<!-- 사장게시글 리스트 불러오기 -->
+        <select id="ebList" resultType="employerBoardVO">
+        	
+       	        SELECT MATCHING, TIMEOVER, EBCODE, USERCODE, TITLE, to_char(REGDATE, 'YYYY/MM/DD')as REGDATE, COUNT 
+       	        FROM EB 
+       	    <![CDATA[    
+       	        WHERE (DEADLINE +7) >= SYSDATE 
+       	    ]]>
+       	        ORDER BY NUM desc           
+        </select>
+
+		<!-- 사장 게시글 읽기 -->
+        <select id="ebSelect" parameterType="String" resultType="employerBoardVO">
+                SELECT TIMEOVER, TITLE, USERCODE , EBCODE, ADDRESS, to_char(workStart, 'YYYY/MM/DD') as workStart, to_char(workEnd, 'YYYY/MM/DD') as workEnd, WORKTIME, SALARY, JOB, AGE, to_char(DEADLINE, 'YYYY/MM/DD') as DEADLINE, CONTENT 
+                FROM EB 
+                WHERE ebCode = #{ebCode}
+        </select>
+       
+        <!-- 사장 게시글 작성 -->
+		<insert id="ebInsert" parameterType="employerBoardVO">
+			    INSERT INTO EB 
+        		(num, ebCode, userCode, regDate, title, address, lat, lng, workStart, workEnd, workTime, salary, job, age, deadline, content, count, timeover, matching) 
+				VALUES 
+				(EBCODE_SEQ.nextval, 'E'||EBCODE_SEQ.nextval, #{userCode}, SYSDATE, #{title}, #{address}, #{lat}, #{lng}, to_date(#{workStart}, 'YYYY/MM/DD'), to_date(#{workEnd}, 'YYYY/MM/DD'), #{workTime}, #{salary}, #{job}, #{age}, to_date(#{deadline}, 'YYYY/MM/DD'), #{content}, default, default, default)
+            <selectKey keyProperty="ebCode" resultType="String">
+                        SELECT NVL(MAX(ebCode), 0) FROM EB
+                </selectKey>
+        </insert>
+    
+        
+ 		<!-- 사장 게시글 수정 -->
+        <update id="ebUpdate" parameterType="employerBoardVO">
+                UPDATE EB SET title = #{title},
+                address = #{address},
+                lat = #{lat},
+                lng = #{lng},
+                workStart = #{workStart},
+                workEnd = #{workEnd},
+                workTime = #{workTime},
+                salary = #{salary},
+                job = #{job},
+                age = #{age},
+                deadline = #{deadline},
+                content = #{content}
+                WHERE ebCode = #{ebCode}
+        </update>
+        
+        <!-- 사장 게시글 공고마감일 지날 시 기간만료 컬럼 'Y'로 업데이트   -->
+        <update id="ebUpdateTimeover" parameterType="String">
+	        <![CDATA[
+		        UPDATE eb SET timeover = 'Y'
+				WHERE deadline+1 <= SYSDATE
+			]]>	
+		</update>
+        
+        
+        <!-- 사장  조회수 증가 -->
+        <update id="ebUpdateCount" parameterType="String">
+                UPDATE EB SET count = count + 1 WHERE ebCode = #{ebCode}
+        </update>
+         
+         <!-- 사장 게시글 삭제 --> 
+        <delete id="ebDelete" parameterType="employerBoardVO">
+				DELETE FROM EB WHERE ebCode = #{ebCode}    
+        </delete>
+        
+         <!-- 사장 게시글 페이징 -->
+        <select id="listPage" resultType="employerBoardVO" parameterType="ebCriteria">
+        	select matching, timeover, ebcode, usercode, title, to_char(REGDATE, 'YYYY/MM/DD') as REGDATE, count
+			from (
+			  select NUM, matching, timeover, ebcode, usercode, title, REGDATE, count, row_number() over(order by NUM desc) as rNum
+			  from eb
+			  )eb
+			where rNum between #{rowStart} and #{rowEnd} 
+			order by NUM desc
+        </select>
+        
+        <!-- 사장 게시물 갯수 -->
+      	<select id="listCount" resultType="int">
+        <![CDATA[
+        	select count(NUM) from eb where NUM > 0
+        ]]>
+        </select>
+        
+        <!-- 사장 게시글 검색 -->
+        <select id="ebSearch" resultType="employerBoardVO" parameterType="ebSearch">
+        	select matching, timeover, ebcode, usercode, title, to_char(REGDATE, 'YYYY/MM/DD') as REGDATE, count
+			from (
+			  select NUM, matching, timeover, ebcode, usercode, title, address, job, worktime, REGDATE, count, row_number() over(order by NUM desc) as rNum
+			  from eb <![CDATA[
+			  	where NUM > 0
+			  ]]>
+			  	<include refid="ebSearch"></include>
+		      )eb
+				where rNum between #{rowStart} and #{rowEnd} 
+				order by NUM desc
+        </select>
+        
+        <sql id="ebSearch">
+        	<if test="searchType != null">
+        		<if test="searchType == 't'.toString()">and title like '%' || #{keyword} || '%'</if>
+        		<if test="searchType == 'a'.toString()">and address like '%' || #{keyword} || '%'</if>
+        		<if test="searchType == 'j'.toString()">and job like '%' || #{keyword} || '%'</if>
+        		<if test="searchType == 'wt'.toString()">and worktime like '%' || #{keyword} || '%'</if>
+        	</if>
+        </sql>
+        
+ 		<!-- 사장 게시글 검색 결과 갯수 -->
+ 		<select id="countEbSearch" resultType="int">
+ 			select count(NUM) 
+ 			from eb				
+	 		<![CDATA[
+	 				where NUM > 0
+	 		]]>
+	 		<include refid="ebSearch"></include>
+ 		</select>
+ 
+ 
+ 
+        
+<!--  	알바 게시판		 -->
+ 		<!-- 알바게시글 리스트 불러오기 -->
+        <select id="wbList" resultType="workerBoardVO">
+       	        SELECT TIMEOVER, WBCODE, USERCODE, TITLE, to_char(REGDATE, 'YYYY/MM/DD')as REGDATE, COUNT 
+       	        FROM WB 
+       	   	<![CDATA[       
+       	        WHERE (DEADLINE +7) >= SYSDATE 
+       	   	]]>     
+       	        ORDER BY NUM desc           
+        </select>
+
+
+		<!-- 알바 게시글 읽기 -->
+        <select id="wbSelect" parameterType="String" resultType="workerBoardVO">
+                SELECT TIMEOVER, TITLE, USERCODE , WBCODE, ADDRESS, to_char(workStart, 'YYYY/MM/DD') as workStart, to_char(workEnd, 'YYYY/MM/DD') as workEnd, WORKTIME, SALARY, JOB, AGE, to_char(DEADLINE, 'YYYY/MM/DD') as DEADLINE, CONTENT 
+                FROM WB 
+                WHERE wbCode = #{wbCode}
+        </select>
+        
+        <!-- 알바 게시글 작성 -->
+		<insert id="wbInsert" parameterType="workerBoardVO">
+			    INSERT INTO WB 
+        		(num, wbCode, userCode, regDate, title, address, lat, lng, workStart, workEnd, workTime, salary, job, age, deadline, content, count, timeover) 
+				VALUES 
+				(WBCODE_SEQ.nextval, 'W'||WBCODE_SEQ.nextval, #{userCode}, SYSDATE, #{title}, #{address}, #{lat}, #{lng}, to_date(#{workStart}, 'YYYY/MM/DD'), to_date(#{workEnd}, 'YYYY/MM/DD'), #{workTime}, #{salary}, #{job}, #{age}, to_date(#{deadline}, 'YYYY/MM/DD'), #{content}, default, default)
+            <selectKey keyProperty="wbCode" resultType="String">
+                        SELECT NVL(MAX(wbCode), 0) FROM WB
+                </selectKey>
+        </insert>
+        
+ 		<!-- 알바 게시글 수정 -->
+        <update id="wbUpdate" parameterType="workerBoardVO">
+                UPDATE WB SET title = #{title},
+                address = #{address},
+                lat = #{lat},
+                lng = #{lng},
+                workStart = #{workStart},
+                workEnd = #{workEnd},
+                workTime = #{workTime},
+                salary = #{salary},
+                job = #{job},
+                age = #{age},
+                deadline = #{deadline},
+                content = #{content}
+                WHERE wbCode = #{wbCode}
+        </update>
+        
+        <!-- 알바 게시글 공고마감일 지날 시 기간만료 컬럼 'Y'로 업데이트   -->
+        <update id="wbUpdateTimeover" parameterType="String">
+	        <![CDATA[
+		        UPDATE wb SET timeover = 'Y'
+				WHERE deadline+1 <= SYSDATE
+			]]>	
+		</update>
+        
+        
+        <!-- 알바  조회수 증가 -->
+        <update id="wbUpdateCount" parameterType="String">
+                UPDATE WB SET count = count + 1 WHERE wbCode = #{wbCode}
+        </update>
+         
+         <!-- 알바 게시글 삭제  -->
+        <delete id="wbDelete" parameterType="workerBoardVO">
+				DELETE FROM WB WHERE wbCode = #{wbCode}    
+        </delete>
+        
+         <!-- 알바 게시글 페이징 -->
+        <select id="wbListPage" resultType="workerBoardVO" parameterType="wbCriteria">
+        	select timeover, wbcode, usercode, title, to_char(REGDATE, 'YYYY/MM/DD') as REGDATE, count
+			from (
+			  select NUM, timeover, wbcode, usercode, title, REGDATE, count, row_number() over(order by NUM desc) as rNum
+			  from wb
+			  )wb
+			where rNum between #{rowStart} and #{rowEnd} 
+			order by NUM desc
+        </select>
+        
+      	<select id="wbListCount" resultType="int">
+        <![CDATA[
+        	select count(NUM) from wb where NUM > 0
+        ]]>
+        </select> 
+        
+          <!-- 알바 게시글 검색 -->
+        <select id="wbSearch" resultType="workerBoardVO" parameterType="wbSearch">
+        	select timeover, wbcode, usercode, title, to_char(REGDATE, 'YYYY/MM/DD') as REGDATE, count
+			from (
+			  select NUM, timeover, wbcode, usercode, title, address, job, worktime, REGDATE, count, row_number() over(order by NUM desc) as rNum
+			  from wb <![CDATA[
+			  	where NUM > 0
+			  ]]>
+			  	<include refid="wbSearch"></include>
+		      )wb
+				where rNum between #{rowStart} and #{rowEnd} 
+				order by NUM desc
+        </select>
+        
+        <sql id="wbSearch">
+        	<if test="searchType != null">
+        		<if test="searchType == 't'.toString()">and title like '%' || #{keyword} || '%'</if>
+        		<if test="searchType == 'a'.toString()">and address like '%' || #{keyword} || '%'</if>
+        		<if test="searchType == 'j'.toString()">and job like '%' || #{keyword} || '%'</if>
+        		<if test="searchType == 'wt'.toString()">and worktime like '%' || #{keyword} || '%'</if>
+        	</if>
+        </sql>
+        
+ 		<!-- 알바 게시글 검색 결과 갯수 -->
+ 		<select id="countWbSearch" resultType="int">
+ 			select count(NUM) 
+ 			from wb				
+	 		<![CDATA[
+	 				where NUM > 0
+	 		]]>
+	 		<include refid="wbSearch"></include>
+ 		</select>       
+         
+        
+        
+        
+        
+<!-- 북마크  -->   
+		<!-- 유저 별 북마크 리스트(사장게시글) -->
+ 		<select id="ebBmkList" parameterType="String" resultType="bookMarkVO">
+       		SELECT * FROM BOOKMARK 
+			WHERE BMKCODE like 'E%' and userCode = #{userCode}        
+        </select>
+        <!-- 유저 별 북마크 리스트(알바게시글) -->
+        <select id="wbBmkList" parameterType="String" resultType="bookMarkVO">
+       		SELECT * FROM BOOKMARK 
+			WHERE BMKCODE like 'W%' and userCode = #{userCode}        
+        </select>
+        
+             
+		<!-- 디비에 북마크한 게시글 있는지 비교 -->
+        <select id="bmkCheck" parameterType="HashMap" resultType="bookMarkVO"> 
+        	select * from bookMark where userCode = #{userCode} and BMKCODE=#{bmkCode}
+        </select>  
+        
+        <!-- 북마크 추가 -->
+		<insert id="bmkInsert" parameterType="bookMarkVO">
+			    INSERT INTO BOOKMARK 
+        		(userCode, bmkCode) 
+				VALUES 
+				(#{userCode }, #{bmkCode})
+        </insert>
+
+        <!-- 북마크 삭제 -->
+        <delete id="bmkDelete" parameterType="bookMarkVO">
+                DELETE 
+                FROM BOOKMARK 
+                WHERE userCode = #{userCode}
+                AND bmkCode = #{bmkCode}
+        </delete>
+
+<!-- 사용자 찜하기 -->
+		<!-- 유저 별 찜하기 리스트 -->
+ 		<select id="loverList" parameterType="String" resultType="loveVO">
+       	        SELECT * FROM LOVE 
+				WHERE userCode = #{userCode}
+        </select>
+             
+		<!-- 디비에 찜하기한 사용자 있는지 비교 -->
+        <select id="loverCheck" parameterType="HashMap" resultType="loveVO"> 
+        	SELECT * FROM LOVE WHERE userCode = #{userCode} AND loverCode=#{loverCode}
+        </select>  
+        
+        <!-- 찜하기 추가 -->
+		<insert id="loverInsert" parameterType="loveVO">
+			    INSERT INTO LOVE 
+        		(userCode, loverCode) 
+				VALUES 
+				(#{userCode }, #{loverCode})
+        </insert>
+
+        <!-- 찜하기 삭제 -->
+        <delete id="loverDelete" parameterType="loveVO">
+                DELETE 
+                FROM LOVE 
+                WHERE userCode = #{userCode}
+                AND loverCode = #{loverCode}
+        </delete>  
+        
+<!-- 최신 공지글 하나 가져오긔 -->        
+        <select id="getNotice" resultType="NoticeVO">
+ 			select "NO", "TITLE" 
+ 				from(select * from "NOTICE" order by rownum desc) 
+ 			where ROWNUM = 1
+ 		</select>    
+ 		
+ 		
+<!-- 사장 상세 검색 -->
+ 		<select id="detailSearch" parameterType="HashMap" resultType="employerBoardVO">           
+         SELECT MATCHING, TIMEOVER, EBCODE, USERCODE, TITLE, to_char(REGDATE, 'YYYY/MM/DD')as REGDATE, WORKSTART, COUNT 
+         FROM (select NUM, MATCHING, TIMEOVER, EBCODE, USERCODE, TITLE, REGDATE, WORKSTART, COUNT, row_number() over(order by REGDATE desc) as rNUM from EB
+         <![CDATA[WHERE (DEADLINE +7) >= SYSDATE and NUM > 0 ]]>
+         <include refid="searchCriteria"></include>
+         ) where rNUM between  #{rowStart} and #{rowEnd} ORDER BY NUM desc    
+      </select>
+      
+      <!-- 사장 상세 검색 결과 갯수 -->     
+      <select id="countDetail" parameterType="HashMap" resultType="int">
+         select count(NUM) from EB <![CDATA[where NUM > 0]]>
+           <include refid="searchCriteria"></include>
+      </select>
+      
+      <sql id="searchCriteria">
+      <if test="addr.size != 0">
+                  and REGEXP_LIKE(ADDRESS, 
+             <foreach item="addrItem" collection="addr" open='' close='' index = "index" separator="||">
+               #{addrItem} 
+               <if test="index != addr.size-1">
+              ||'|'
+              </if>
+             </foreach>
+             )</if>
+             
+             <if test="workStartDate != null and workEndDate != null">
+               and WORKSTART <![CDATA[   >= #{workStartDate} and WORKEND <= #{workEndDate} ]]>
+             </if>
+
+              <if test="worktime.size != 0">
+              and REGEXP_LIKE(WORKTIME,
+             <foreach item="worktimeItem" collection="worktime" open='' close='' index = "index" separator="||">
+               #{worktimeItem}  
+               <if test="index != worktime.size-1">
+              ||'|'
+              </if>
+             </foreach>
+             )</if>
+             
+             <if test="job.size != 0">
+             and REGEXP_LIKE(JOB,
+             <foreach item="jobItem" collection="job" open='' close='' index = "index" separator="||">
+               #{jobItem}
+               <if test="index != job.size-1">
+              ||'|'
+              </if>
+             </foreach>
+             )</if>
+
+              <if test="age.size != 0">
+                and REGEXP_LIKE(AGE,
+             <foreach item="ageItem" collection="age" open='' close='' index = "index" separator="||">
+               #{ageItem}
+               <if test="index != age.size-1">
+              ||'|'
+               </if>
+             </foreach>
+             ) </if>   
+      </sql>
+      
+ 		
+ <!-- 알바 상세검색 + 페이징 -->
+ 		<select id="wbDetailSearch" parameterType="HashMap" resultType="workerBoardVO">           
+         SELECT TIMEOVER, WBCODE, USERCODE, TITLE, to_char(REGDATE, 'YYYY/MM/DD')as REGDATE, WORKSTART, COUNT 
+         FROM (select NUM, TIMEOVER, WBCODE, USERCODE, TITLE, REGDATE, WORKSTART, COUNT, row_number() over(order by REGDATE desc) as rNUM from WB
+         <![CDATA[WHERE (DEADLINE +7) >= SYSDATE and NUM > 0 ]]>
+         <include refid="WbSearch"></include>
+         ) where rNUM between  #{rowStart} and #{rowEnd} ORDER BY NUM desc   
+      </select>
+         
+       <sql id="WbSearch">
+      <if test="addr.size != 0">
+                  and REGEXP_LIKE(ADDRESS, 
+             <foreach item="addrItem" collection="addr" open='' close='' index = "index" separator="||">
+               #{addrItem} 
+               <if test="index != addr.size-1">
+              ||'|'
+              </if>
+             </foreach>
+             )</if>
+             
+             <if test="workStartDate != null and workEndDate != null">
+               and WORKSTART <![CDATA[   >= #{workStartDate} and WORKEND <= #{workEndDate} ]]>
+             </if>
+
+              <if test="worktime.size != 0">
+              and REGEXP_LIKE(WORKTIME,
+             <foreach item="worktimeItem" collection="worktime" open='' close='' index = "index" separator="||">
+               #{worktimeItem}  
+               <if test="index != worktime.size-1">
+              ||'|'
+              </if>
+             </foreach>
+             )</if>
+             
+             <if test="job.size != 0">
+             and REGEXP_LIKE(JOB,
+             <foreach item="jobItem" collection="job" open='' close='' index = "index" separator="||">
+               #{jobItem}
+               <if test="index != job.size-1">
+              ||'|'
+              </if>
+             </foreach>
+             )</if>
+
+              <if test="age.size != 0">
+                and REGEXP_LIKE(AGE,
+             <foreach item="ageItem" collection="age" open='' close='' index = "index" separator="||">
+               #{ageItem}
+               <if test="index != age.size-1">
+              ||'|'
+               </if>
+             </foreach>
+             ) </if>   
+      </sql>
+ 		
+ 		<!-- 상세 검색 결과 갯수 -->
+ 		<select id="wbCountDetail" parameterType="HashMap" resultType="int">
+ 			select count(NUM) 
+ 			from WB 			
+	 		<![CDATA[
+	 				where NUM > 0
+	 		]]>
+	 		<include refid="WbSearch"></include>
+ 		</select>    		
+
+</mapper>

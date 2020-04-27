@@ -1,0 +1,44 @@
+@charset "UTF-8";
+
+.joinDiv{
+	background-color:#E7E7E7;
+	width:1320px;
+	height:105px;
+	font-size: 60px;
+    font-weight: bold;
+    padding-left: 10px;
+    margin-top: 105px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#stepHr{
+	width: 1320px;
+    margin-left: auto;
+    margin-right: auto;
+}
+#stepBtn{	
+    margin-top: 30px;
+    margin-bottom: 30px;
+	
+}
+.joinForm{	
+    width: 600px;
+    height: 800px;
+}
+
+.step1Form{
+	margin: 40px auto;
+	width: 550px;
+}
+.form-group col-md-4{
+	float:left;
+	width: 330px;
+	height: 130px;
+}
+
+textarea{
+	overflow-y:scroll;
+	width: 606px;
+	height: 150px;
+}
